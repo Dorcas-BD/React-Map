@@ -6,8 +6,8 @@ import {
   GoogleMap,
   Marker,
 } from "react-google-maps";
-
 import Geocode from 'react-geocode'
+import AutoComplete from 'react-google-autocomplete'
  
 
 Geocode.setApiKey("AIzaSyB9i567AqNO_ptBZwkUaBV5zyctmIxe-zc")
@@ -29,6 +29,41 @@ class App extends Component {
       lng: 0
     }
   }
+
+  componentDidMount() {
+    if(navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+        this.setState({
+          mapPosition: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+          markerPosition: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }
+        }, () => {
+          Geocode.fromLatLng(position.coords.latitude, position.coords.longitude)
+          .then(response => {
+            const address = response.results[0].formatted_address,
+                  addressArray = response.results[0].address_components,
+                  city = this.getCity(addressArray),
+                  area = this.getArea(addressArray),
+                  state = this.getState(addressArray)
+
+            this.setState({
+              address: (address) ? address : "",
+              area: (area) ? area : "",
+              city: (city) ? city : "",
+              state: (state) ? state : "",
+            })
+          })
+        })
+      })
+    }
+  }
+
+
 
   getCity = (addressArray) => {
     let city = "";
@@ -70,39 +105,60 @@ class App extends Component {
 
 
 
-  onMarkerDragEnd = (e) => {
-    let newLat = e.latLng.lat();
-    let newLng = e.latLng.lng();
+  onMarkerDragEnd = (event) => {
+    let newLat = event.latLng.lat();
+    let newLng = event.latLng.lng();
 
     Geocode.fromLatLng(newLat, newLng)
     .then(response => {
-      
-      
       const address = response.results[0].formatted_address,
             addressArray = response.results[0].address_components,
             city = this.getCity(addressArray),
             area = this.getArea(addressArray),
             state = this.getState(addressArray)
 
-            this.setState({
-              address: (address) ? address : "",
-              area: (area) ? area : "",
-              city: (city) ? city : "",
-              state: (state) ? state : "",
-              markerPosition: {
-                lat: newLat,
-                lng: newLng
-              },
-              mapPosition: {
-                lat: newLat,
-                lng: newLng
-              }
-            })
+      this.setState({
+        address: (address) ? address : "",
+        area: (area) ? area : "",
+        city: (city) ? city : "",
+        state: (state) ? state : "",
+        markerPosition: {
+          lat: newLat,
+          lng: newLng
+        },
+        mapPosition: {
+          lat: newLat,
+          lng: newLng
+        }
+      })
     })
-
-
   }
  
+
+  onPlacedSelected = (place) => {
+    const address = place.formatted_address,
+          addressArray = place.address_components,
+          city = this.getCity(addressArray),
+          area = this.Area(addressArray),
+          state = this.getState(addressArray),
+          newLat = place.geometry.location.lat(),
+          newLng = place.geometry.location.lng();
+    this.setState({
+      address: (address) ? address : "",
+      area: (area) ? area : "",
+      city: (city) ? city : "",
+      state: (state) ? state : "",
+      markerPosition: {
+        lat: newLat,
+        lng: newLng
+      },
+      mapPosition: {
+        lat: newLat,
+        lng: newLng
+      }
+    })
+
+  }
 
   render() {
 
@@ -119,20 +175,78 @@ class App extends Component {
           position={{ lat: this.state.markerPosition.lat, lng: this.state.markerPosition.lng  }}
         >
           <InfoWindow>
-            <div>Hello</div>
+            <div>Me</div>
           </InfoWindow>
         </Marker>
+
+    
+        <AutoComplete 
+          style={{
+            boxSizing: `border-box`,
+            border: `1px solid transparent`,
+            width: `240px`,
+            height: `40px`,
+            marginTop: `27px`,
+            padding: `0 12px`,
+            borderRadius: `3px`,
+            boxShadow: `0 2px 6px rgba(0, 0, 0, 0.3)`,
+            fontSize: `14px`,
+            outline: `none`,
+            textOverflow: `ellipses`,
+          }}
+          types={['(regions)']}
+          onPlaceSelected={this.onPlaceSelected}
+        ></AutoComplete>
+        <AutoComplete 
+          style={{
+            boxSizing: `border-box`,
+            border: `1px solid transparent`,
+            width: `240px`,
+            height: `40px`,
+            margin: `27px 0 0 10px`,
+            padding: `0 12px`,
+            borderRadius: `3px`,
+            boxShadow: `0 2px 6px rgba(0, 0, 0, 0.3)`,
+            fontSize: `14px`,
+            outline: `none`,
+            textOverflow: `ellipses`,
+          }}
+          types={['(regions)']}
+          onPlaceSelected={this.onPlaceSelected}
+        ></AutoComplete>
       </GoogleMap>
     ));
     
 
     return (
-      <MapWithAMarker
-        googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9i567AqNO_ptBZwkUaBV5zyctmIxe-zc&v=3.exp&libraries=geometry,drawing,places"
-        loadingElement={<div style={{ height: `100%` }} />}
-        containerElement={<div style={{ height: `600px` }} />}
-        mapElement={<div style={{ height: `100%` }} />}
-      />
+      <div style={{padding: '20px', margin: '0 auto'}}>
+        <h1>React Map</h1>
+
+        <MapWithAMarker
+          googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9i567AqNO_ptBZwkUaBV5zyctmIxe-zc&v=3.exp&libraries=geometry,drawing,places"
+          loadingElement={<div style={{ height: `100%` }} />}
+          containerElement={<div style={{ height: `600px` }} />}
+          mapElement={<div style={{ height: `100%` }} />}
+        />
+        <input
+          type="submit"
+          placeholder="Add"
+          style={{
+            boxSizing: `border-box`,
+            border: `1px solid transparent`,
+            width: `80px`,
+            height: `40px`,
+            margin: `27px 0 0 490px`,
+            padding: `0 12px`,
+            borderRadius: `3px`,
+            boxShadow: `0 2px 6px rgba(0, 0, 0, 0.3)`,
+            fontSize: `14px`,
+            outline: `none`,
+            textOverflow: `ellipses`,
+            background: 'blue'
+          }}
+        />
+      </div>
     );
   }
 }
