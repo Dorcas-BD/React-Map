@@ -19,7 +19,7 @@ class App extends Component {
     area: "",
     state: "",
     zoom: 15,
-    height: 600,
+    height: 400,
     mapPosition: {
       lat: 0,
       lng: 0
